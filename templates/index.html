@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Football Analysis Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="site-banner">
+  <div class="banner-inner">
+    <div class="banner-left">
+      <div class="banner-badge">LIVE ANALYSIS</div>
+      <div class="banner-title">Football Analysis Platform</div>
+      <div class="banner-sub">
+        YOLOv8 · ByteTrack · Computer Vision · Match Intelligence
+      </div>
+    </div>
+    <div class="banner-right">
+      <div class="banner-stat">
+        <div class="banner-stat-val">YOLOv8</div>
+        <div class="banner-stat-lbl">Detection</div>
+      </div>
+      <div class="banner-divider"></div>
+      <div class="banner-stat">
+        <div class="banner-stat-val">ByteTrack</div>
+        <div class="banner-stat-lbl">Tracking</div>
+      </div>
+      <div class="banner-divider"></div>
+      <div class="banner-stat">
+        <div class="banner-stat-val">475K</div>
+        <div class="banner-stat-lbl">Matches</div>
+      </div>
+      <div class="banner-divider"></div>
+      <div class="banner-stat">
+        <div class="banner-stat-val">42</div>
+        <div class="banner-stat-lbl">Leagues</div>
+      </div>
+    </div>
+  </div>
+  <div class="banner-pitch">
+    <svg width="100%" height="100%" viewBox="0 0 1200 120"
+         preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Pitch stripes -->
+      <rect x="0"   y="0" width="120" height="120" fill="rgba(255,255,255,0.018)"/>
+      <rect x="240" y="0" width="120" height="120" fill="rgba(255,255,255,0.018)"/>
+      <rect x="480" y="0" width="120" height="120" fill="rgba(255,255,255,0.018)"/>
+      <rect x="720" y="0" width="120" height="120" fill="rgba(255,255,255,0.018)"/>
+      <rect x="960" y="0" width="120" height="120" fill="rgba(255,255,255,0.018)"/>
+      <!-- Centre line -->
+      <line x1="600" y1="0" x2="600" y2="120"
+            stroke="rgba(255,255,255,0.07)" stroke-width="1.5"/>
+      <!-- Centre circle -->
+      <circle cx="600" cy="60" r="48"
+              fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1.5"/>
+      <circle cx="600" cy="60" r="3"
+              fill="rgba(255,255,255,0.15)"/>
+      <!-- Left penalty box -->
+      <rect x="0" y="22" width="110" height="76"
+            fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1.5"/>
+      <!-- Left 6-yard box -->
+      <rect x="0" y="38" width="40" height="44"
+            fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+      <!-- Right penalty box -->
+      <rect x="1090" y="22" width="110" height="76"
+            fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1.5"/>
+      <!-- Right 6-yard box -->
+      <rect x="1160" y="38" width="40" height="44"
+            fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+      <!-- Penalty spots -->
+      <circle cx="88" cy="60" r="2.5" fill="rgba(255,255,255,0.15)"/>
+      <circle cx="1112" cy="60" r="2.5" fill="rgba(255,255,255,0.15)"/>
+      <!-- Touchlines -->
+      <rect x="0" y="0" width="1200" height="120"
+            fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+    </svg>
+  </div>
+</div>
+
+<nav class="navbar">
+  <div class="nav-brand">
+    <span></span>
+    Football Analysis Platform
+  </div>
+  <div class="nav-links">
+
+    <a href="#overview">Overview</a>
+    <a href="#formation">Formation</a>
+    <a href="#heatmaps">Heatmaps</a>
+    <a href="#players">Players</a>
+    <a href="/intelligence">Intelligence</a>
+    <a href="/upload">Upload Video</a>
+    <a href="/download/report"
+     style="display:inline-flex;align-items:center;gap:8px;
+          padding:8px 18px;background:var(--green);color:white;
+          text-decoration:none;border-radius:8px;font-size:0.82rem;
+          font-weight:700;letter-spacing:0.02em;transition:background 0.15s"
+     onmouseover="this.style.background='#15803d'"
+     onmouseout="this.style.background='var(--green)'">
+     Download Report PDF
+     </a>
+     
+  </div>
+</nav>
+
+<div class="page-header" style="background-image: url('{{ url_for('static', filename='banner.jpg') }}')">
+  <div class="page-header-content">
+    <h1>Match Analysis Report</h1>
+    <p>Computer vision analysis powered by YOLOv8 and ByteTrack</p>
+    <div class="header-meta">
+      <div class="header-meta-item">
+        Duration
+        <strong>{{ data.duration_sec }}s</strong>
+      </div>
+      <div class="header-meta-item">
+        Frames Processed
+        <strong>{{ data.total_frames }}</strong>
+      </div>
+      <div class="header-meta-item">
+        Ball Possession — Team 1
+        <strong>{{ data.team1_pct }}%</strong>
+      </div>
+      <div class="header-meta-item">
+        Ball Possession — Team 2
+        <strong>{{ data.team2_pct }}%</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Overview -->
+  <section id="overview">
+    <div class="section-header">
+      <h2>Match Overview</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-card accent">
+        <div class="metric-label">Team 1 Possession</div>
+        <div class="metric-value">{{ data.team1_pct }}%</div>
+      </div>
+      <div class="metric-card accent">
+        <div class="metric-label">Team 2 Possession</div>
+        <div class="metric-value">{{ data.team2_pct }}%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Total Passes</div>
+        <div class="metric-value">{{ data.pass_summary.get('total_passes', 0) }}</div>
+        <div class="metric-sub">detected events</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Interceptions</div>
+        <div class="metric-value">{{ data.pass_summary.get('interceptions', 0) }}</div>
+        <div class="metric-sub">ball turnovers</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Avg Pass Distance</div>
+        <div class="metric-value">{{ data.pass_summary.get('avg_pass_distance_meters', 0) }}</div>
+        <div class="metric-sub">metres</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Frames Analysed</div>
+        <div class="metric-value">{{ data.total_frames }}</div>
+        <div class="metric-sub">at 24 fps</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Ball Possession</div>
+        <div class="possession-wrap">
+          <div class="possession-teams">
+            <span>Team 1 — {{ data.team1_pct }}%</span>
+            <span>Team 2 — {{ data.team2_pct }}%</span>
+          </div>
+          <div class="possession-bar">
+            <div class="possession-t1" style="width:{{ data.team1_pct }}%"></div>
+            <div class="possession-t2" style="width:{{ data.team2_pct }}%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Pass Breakdown</div>
+        <div class="chart-wrap">
+          <canvas id="passChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Formation -->
+  <section id="formation">
+    <div class="section-header">
+      <h2>Formation Analysis</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="two-col" style="margin-bottom:16px">
+      <div class="card">
+        <div class="card-title">Team 1 Formation</div>
+        <div class="formation-badge">
+          {{ data.formation_summary.get(1, {}).get('dominant_formation', 'N/A') }}
+        </div>
+        <div class="formation-breakdown">
+          {% for formation, count in data.formation_summary.get(1, {}).get('formation_counts', {}).items() %}
+          {% set total_samples = data.formation_summary.get(1, {}).get('total_samples', 1) %}
+          {% set pct = (count / total_samples * 100) | round(1) %}
+          <div class="breakdown-row">
+            <span class="breakdown-name">{{ formation }}</span>
+            <div class="breakdown-bar-wrap">
+              <div class="breakdown-bar t1-bar" style="width:{{ pct }}%"></div>
+            </div>
+            <span class="breakdown-pct">{{ pct }}%</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Team 2 Formation</div>
+        <div class="formation-badge">
+          {{ data.formation_summary.get(2, {}).get('dominant_formation', 'N/A') }}
+        </div>
+        <div class="formation-breakdown">
+          {% for formation, count in data.formation_summary.get(2, {}).get('formation_counts', {}).items() %}
+          {% set total_samples = data.formation_summary.get(2, {}).get('total_samples', 1) %}
+          {% set pct = (count / total_samples * 100) | round(1) %}
+          <div class="breakdown-row">
+            <span class="breakdown-name">{{ formation }}</span>
+            <div class="breakdown-bar-wrap">
+              <div class="breakdown-bar t2-bar" style="width:{{ pct }}%"></div>
+            </div>
+            <span class="breakdown-pct">{{ pct }}%</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Lineup Card</div>
+      <img src="/image/lineup" alt="Lineup Card" class="full-img">
+    </div>
+  </section>
+
+  <!-- Heatmaps -->
+  <section id="heatmaps">
+    <div class="section-header">
+      <h2>Player Position Heatmaps</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="two-col" style="margin-bottom:16px">
+      <div class="card">
+        <div class="card-title">Team 1 — Positional Density</div>
+        <img src="/image/heatmap_team1" alt="Team 1 Heatmap" class="full-img">
+      </div>
+      <div class="card">
+        <div class="card-title">Team 2 — Positional Density</div>
+        <img src="/image/heatmap_team2" alt="Team 2 Heatmap" class="full-img">
+      </div>
+    </div>
+    
+  </section>
+
+  <!-- Players -->
+  <section id="players">
+    <div class="section-header">
+      <h2>Player Performance</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Top Speed — Ranked</div>
+      <div class="podium">
+        {% set ns = namespace(count=0) %}
+        {% for player_id, stats in data.player_stats.items() | sort(attribute='1.max_speed', reverse=True) %}
+        {% if ns.count < 3 %}
+        {% set ns.count = ns.count + 1 %}
+        <div class="podium-card {% if ns.count == 1 %}gold{% elif ns.count == 2 %}silver{% else %}bronze{% endif %}">
+          <div class="podium-rank">
+            {% if ns.count == 1 %}1st{% elif ns.count == 2 %}2nd{% else %}3rd{% endif %}
+          </div>
+          <div class="podium-speed">{{ stats.max_speed }}</div>
+          <div class="podium-unit">km / h</div>
+          <div class="podium-name">Player {{ player_id }}</div>
+          <div class="podium-team {% if stats.team == 1 %}t1-pill{% else %}t2-pill{% endif %}" style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;margin-top:6px">
+            Team {{ stats.team }}
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-bottom:16px">
+      <div class="card">
+        <div class="card-title">Max Speed by Player (km/h)</div>
+        <div class="chart-wrap">
+          <canvas id="speedChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Distance Covered by Player (m)</div>
+        <div class="chart-wrap">
+          <canvas id="distChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Full Player Statistics</div>
+      <table class="player-table">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Team</th>
+            <th>Max Speed (km/h)</th>
+            <th>Speed</th>
+            <th>Distance (m)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for player_id, stats in data.player_stats.items() | sort(attribute='1.max_speed', reverse=True) %}
+          {% if player_id <= 50 and stats.max_speed > 0 %}
+          <tr>
+            <td><strong>Player {{ player_id }}</strong></td>
+            <td>
+              <span class="team-pill {% if stats.team == 1 %}t1-pill{% else %}t2-pill{% endif %}">
+                Team {{ stats.team }}
+              </span>
+            </td>
+            <td><strong>{{ stats.max_speed }}</strong></td>
+            <td class="speed-bar-cell">
+              <div class="speed-bar-wrap">
+                <div class="speed-bar-fill" style="width:{{ (stats.max_speed / 40 * 100) | int }}%"></div>
+              </div>
+            </td>
+            <td>{{ stats.total_distance }}</td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+<footer class="footer">
+  Football Analysis Platform — YOLOv8 + ByteTrack + Historical Match Intelligence
+</footer>
+
+<script src="/static/charts.js"></script>
+<script>
+const passData = {
+  team1_passes: {{ data.pass_summary.get('team1_passes', 0) }},
+  team2_passes: {{ data.pass_summary.get('team2_passes', 0) }},
+  interceptions: {{ data.pass_summary.get('interceptions', 0) }},
+};
+
+const playerStats = {
+  {% for player_id, stats in data.player_stats.items() %}
+  {% if player_id <= 50 and stats.max_speed > 0 %}
+  "{{ player_id }}": {
+    team: {{ stats.team }},
+    max_speed: {{ stats.max_speed }},
+    total_distance: {{ stats.total_distance }}
+  },
+  {% endif %}
+  {% endfor %}
+};
+
+initCharts(passData, playerStats);
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function runPrediction() {
+  const homeTeam = document.getElementById('homeTeam').value || 'Home';
+  const awayTeam = document.getElementById('awayTeam').value || 'Away';
+  const homeElo  = parseFloat(document.getElementById('homeElo').value) || 1800;
+  const awayElo  = parseFloat(document.getElementById('awayElo').value) || 1750;
+  const homeForm = parseFloat(document.getElementById('homeForm').value) || 9;
+  const awayForm = parseFloat(document.getElementById('awayForm').value) || 7;
+
+  fetch('/api/predict', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({homeElo, awayElo, homeForm, awayForm})
+  })
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById('predResult').style.display = 'block';
+    document.getElementById('predTeams').textContent = homeTeam + ' vs ' + awayTeam;
+    document.getElementById('homeLabel').textContent = homeTeam;
+    document.getElementById('awayLabel').textContent = awayTeam;
+
+    const homeBar = document.getElementById('homeBar');
+    const drawBar = document.getElementById('drawBar');
+    const awayBar = document.getElementById('awayBar');
+
+    homeBar.style.width = d.home + '%';
+    homeBar.textContent = d.home + '%';
+    drawBar.style.width = d.draw + '%';
+    drawBar.textContent = d.draw + '%';
+    awayBar.style.width = d.away + '%';
+    awayBar.textContent = d.away + '%';
+  });
+}
+
+let h2hChartInst = null;
+
+function loadH2H() {
+  const teamA = document.getElementById('h2hTeamA').value;
+  const teamB = document.getElementById('h2hTeamB').value;
+  if (!teamA || !teamB) return;
+
+  fetch(`/api/h2h?teamA=${encodeURIComponent(teamA)}&teamB=${encodeURIComponent(teamB)}`)
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById('h2hResult').style.display = 'block';
+    document.getElementById('h2hNameA').textContent = teamA;
+    document.getElementById('h2hNameB').textContent = teamB;
+    document.getElementById('h2hWinsA').textContent = d.winsA;
+    document.getElementById('h2hDraws').textContent = d.draws;
+    document.getElementById('h2hWinsB').textContent = d.winsB;
+
+    if (h2hChartInst) h2hChartInst.destroy();
+    h2hChartInst = new Chart(document.getElementById('h2hChart'), {
+      type: 'bar',
+      data: {
+        labels: d.seasons,
+        datasets: [
+          { label: teamA + ' Goals', data: d.goalsA, backgroundColor: '#1e2d3d', borderRadius: 4 },
+          { label: teamB + ' Goals', data: d.goalsB, backgroundColor: '#16a34a', borderRadius: 4 },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#6c757d', font: { size: 11 } } } },
+        scales: {
+          x: { ticks: { color: '#adb5bd' }, grid: { color: '#e9ecef' } },
+          y: { ticks: { color: '#adb5bd' }, grid: { color: '#e9ecef' } }
+        }
+      }
+    });
+  });
+}
+
+let eloChartInst = null;
+
+function loadElo() {
+  const club = document.getElementById('eloClub').value;
+  if (!club) return;
+
+  fetch(`/api/elo?club=${encodeURIComponent(club)}`)
+  .then(r => r.json())
+  .then(d => {
+    if (eloChartInst) eloChartInst.destroy();
+    eloChartInst = new Chart(document.getElementById('eloChart'), {
+      type: 'line',
+      data: {
+        labels: d.dates,
+        datasets: [{
+          label: club + ' Elo Rating',
+          data: d.elos,
+          borderColor: '#1e2d3d',
+          backgroundColor: 'rgba(30,45,61,0.06)',
+          borderWidth: 2,
+          pointRadius: 0,
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#6c757d', font: { size: 11 } } } },
+        scales: {
+          x: { ticks: { color: '#adb5bd', maxTicksLimit: 12 }, grid: { color: '#e9ecef' } },
+          y: { ticks: { color: '#adb5bd' }, grid: { color: '#e9ecef' } }
+        }
+      }
+    });
+  });
+}
+
+function loadLeague() {
+  const division = document.getElementById('leagueDivision').value;
+  const season   = document.getElementById('leagueSeason').value;
+  if (!division) return;
+
+  fetch(`/api/league?division=${encodeURIComponent(division)}&season=${encodeURIComponent(season)}`)
+  .then(r => r.json())
+  .then(d => {
+    const tbody = document.getElementById('leagueBody');
+    if (!d.matches || d.matches.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="color:var(--gray3);text-align:center;padding:24px">No matches found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = d.matches.map(m => `
+      <tr>
+        <td>${m.date}</td>
+        <td><strong>${m.home}</strong></td>
+        <td>${m.away}</td>
+        <td><strong>${m.score}</strong></td>
+        <td><span class="team-pill ${m.result === 'H' ? 't1-pill' : m.result === 'A' ? 't2-pill' : ''}">${m.result === 'H' ? 'Home Win' : m.result === 'A' ? 'Away Win' : 'Draw'}</span></td>
+        <td>${m.homeElo || '-'}</td>
+        <td>${m.awayElo || '-'}</td>
+      </tr>
+    `).join('');
+  });
+}
+</script>
+</body>
+</html>

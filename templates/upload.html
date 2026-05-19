@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Video — Football Analysis Platform</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.upload-page {
+  min-height: 100vh;
+  background: var(--gray1);
+  display: flex;
+  flex-direction: column;
+}
+.upload-header {
+  background: var(--navy);
+  padding: 18px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 3px solid var(--green);
+}
+.upload-header .brand {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.upload-header .brand span {
+  width: 8px; height: 8px;
+  background: var(--green);
+  border-radius: 50%;
+  display: inline-block;
+}
+.upload-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+.upload-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 48px 40px;
+  max-width: 540px;
+  width: 100%;
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+.upload-card h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.upload-card p {
+  color: var(--gray4);
+  font-size: 0.88rem;
+  margin-bottom: 32px;
+}
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 48px 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--gray1);
+  position: relative;
+}
+.drop-zone:hover, .drop-zone.dragover {
+  border-color: var(--navy);
+  background: #f0f4f8;
+}
+.drop-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+.drop-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 14px;
+  background: var(--navy);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.drop-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: white;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.drop-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gray5);
+  margin-bottom: 6px;
+}
+.drop-sub {
+  font-size: 0.8rem;
+  color: var(--gray3);
+}
+.file-selected {
+  display: none;
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #15803d;
+  font-weight: 600;
+  text-align: left;
+}
+.upload-btn {
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  background: var(--navy);
+  color: var(--white);
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+  letter-spacing: 0.02em;
+}
+.upload-btn:hover { background: #162433; }
+.upload-btn:disabled {
+  background: var(--gray3);
+  cursor: not-allowed;
+}
+.or-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0;
+  color: var(--gray3);
+  font-size: 0.82rem;
+}
+.or-divider::before, .or-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.existing-btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: var(--white);
+  color: var(--navy);
+  border: 1.5px solid var(--navy);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+.existing-btn:hover {
+  background: var(--navy);
+  color: var(--white);
+}
+
+/* Progress overlay */
+.progress-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 15, 26, 0.85);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.progress-overlay.show { display: flex; }
+.progress-card {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 40px;
+  width: 460px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.progress-card h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.progress-step {
+  font-size: 0.85rem;
+  color: var(--gray4);
+  margin-bottom: 24px;
+  min-height: 20px;
+}
+.progress-track {
+  background: var(--gray2);
+  border-radius: 8px;
+  height: 10px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--navy), var(--green));
+  border-radius: 8px;
+  transition: width 0.5s ease;
+  width: 0%;
+}
+.progress-pct {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--navy);
+  margin-top: 12px;
+}
+.progress-note {
+  font-size: 0.78rem;
+  color: var(--gray3);
+  margin-top: 8px;
+}
+.error-card {
+  display: none;
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #9f1239;
+  text-align: left;
+}
+</style>
+</head>
+<body>
+
+<div class="upload-page">
+  <div class="upload-header">
+    <div class="brand">
+      <span></span>
+      Football Analysis Platform
+    </div>
+    <a href="/" class="back-btn" style="font-size:0.82rem">
+      View current analysis
+    </a>
+  </div>
+
+  <div class="upload-body">
+    <div class="upload-card">
+      <h1>Analyse a Match</h1>
+      <p>Upload a football video clip and get instant AI-powered analysis —
+         player tracking, heatmaps, formations and possession stats.</p>
+
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".mp4,.avi,.mov,.mkv">
+        <div class="drop-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="drop-title">Drag and drop your video here</div>
+        <div class="drop-sub">MP4, AVI, MOV or MKV — up to 500MB</div>
+      </div>
+
+      <div class="file-selected" id="fileSelected">
+        Selected: <span id="fileName"></span>
+      </div>
+
+      <div class="error-card" id="errorCard"></div>
+
+      <button class="upload-btn" id="uploadBtn"
+              onclick="startUpload()" disabled>
+        Run Analysis
+      </button>
+
+      <div class="or-divider">or</div>
+
+      <a href="/" class="existing-btn">
+        View existing analysis
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Progress overlay -->
+<div class="progress-overlay" id="progressOverlay">
+  <div class="progress-card">
+    <h2>Analysing Video</h2>
+    <div class="progress-step" id="progressStep">Starting pipeline...</div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-pct" id="progressPct">0%</div>
+    <div class="progress-note">
+      This may take a few minutes depending on video length.
+      Do not close this window.
+    </div>
+  </div>
+</div>
+
+<script>
+const fileInput  = document.getElementById('fileInput');
+const dropZone   = document.getElementById('dropZone');
+const uploadBtn  = document.getElementById('uploadBtn');
+const fileSelDiv = document.getElementById('fileSelected');
+const fileNameEl = document.getElementById('fileName');
+const errorCard  = document.getElementById('errorCard');
+
+// File selection
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length > 0) {
+    fileNameEl.textContent = fileInput.files[0].name;
+    fileSelDiv.style.display = 'block';
+    uploadBtn.disabled = false;
+    errorCard.style.display = 'none';
+  }
+});
+
+// Drag and drop
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', () => {
+  dropZone.classList.remove('dragover');
+});
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    fileInput.files = e.dataTransfer.files;
+    fileNameEl.textContent = file.name;
+    fileSelDiv.style.display = 'block';
+    uploadBtn.disabled = false;
+    errorCard.style.display = 'none';
+  }
+});
+
+// Upload
+function startUpload() {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  uploadBtn.disabled = true;
+  errorCard.style.display = 'none';
+
+  const formData = new FormData();
+  formData.append('video', file);
+
+  fetch('/api/upload', { method: 'POST', body: formData })
+  .then(r => r.json())
+  .then(d => {
+    if (d.error) {
+      showError(d.error);
+      uploadBtn.disabled = false;
+      return;
+    }
+    showProgress(d.job_id);
+  })
+  .catch(err => {
+    showError('Upload failed. Please try again.');
+    uploadBtn.disabled = false;
+  });
+}
+
+function showError(msg) {
+  errorCard.textContent = msg;
+  errorCard.style.display = 'block';
+}
+
+// Poll for progress
+function showProgress(jobId) {
+  document.getElementById('progressOverlay').classList.add('show');
+  pollJob(jobId);
+}
+
+function pollJob(jobId) {
+  fetch(`/api/job/${jobId}`)
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById('progressStep').textContent = d.step;
+    document.getElementById('progressFill').style.width = d.progress + '%';
+    document.getElementById('progressPct').textContent = d.progress + '%';
+
+    if (d.status === 'done') {
+      document.getElementById('progressStep').textContent = 'Analysis complete — redirecting...';
+      setTimeout(() => {
+        window.location.href = `/results/${jobId}`;
+      }, 1000);
+    } else if (d.status === 'error') {
+      document.getElementById('progressOverlay').classList.remove('show');
+      showError('Analysis failed: ' + (d.error || 'Unknown error'));
+      uploadBtn.disabled = false;
+    } else {
+      setTimeout(() => pollJob(jobId), 2000);
+    }
+  })
+  .catch(() => setTimeout(() => pollJob(jobId), 3000));
+}
+
+// Check if returning from a job
+const params = new URLSearchParams(window.location.search);
+const jobId = params.get('job');
+if (jobId) showProgress(jobId);
+</script>
+</body>
+</html>

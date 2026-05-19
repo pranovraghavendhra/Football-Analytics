@@ -1,0 +1,118 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Video files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.wmv
+*.flv
+*.webm
+*.m4v
+*.mpeg
+*.mpg
+*.3gp
+*.ts
+*.mts
+*.m2ts
+
+# Image/Photo files
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.tif
+*.webp
+*.svg
+*.ico
+*.raw
+*.heic
+*.heif
+*.psd
+
+# Trained data / ML artifacts
+*.pkl
+*.pickle
+stubs/
+*.h5
+*.hdf5
+*.pt
+*.pth
+*.onnx
+*.pb
+*.tflite
+*.joblib
+*.model
+*.weights
+saved_models/
+checkpoints/
+
+# Data files
+*.csv
+*.parquet
+*.json
+*.jsonl
+*.npy
+*.npz
+*.feather
+*.arrow
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache & temp
+*.cache
+.cache/
+cache/
+*.tmp
+*.temp
+*.log
+*.bak
+*.swp
+~$*
+tmp/
+temp/
+logs/
+
+# Compiled / build
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+runs/
+output_videos/
+input_videos/
+models/
+datasets/

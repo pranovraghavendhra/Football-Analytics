@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Match Intelligence — Football Analysis Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.intel-hero {
+  background: var(--navy);
+  padding: 40px;
+  color: var(--white);
+  border-bottom: 3px solid var(--green);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.intel-hero h1 { font-size: 1.8rem; font-weight: 700; }
+.intel-hero p { color: rgba(255,255,255,0.5); font-size: 0.9rem; margin-top:4px }
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: rgba(255,255,255,0.08);
+  color: var(--white);
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 0.15s;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.back-btn:hover { background: rgba(255,255,255,0.15); }
+.intel-tabs {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+  display: flex;
+  gap: 4px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.intel-tab {
+  padding: 16px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gray4);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.intel-tab:hover { color: var(--navy); }
+.intel-tab.active {
+  color: var(--navy);
+  border-bottom-color: var(--green);
+}
+.intel-body { max-width: 1100px; margin: 0 auto; padding: 32px 24px 60px; }
+.info-banner {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 0.82rem;
+  color: #15803d;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+.result-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.result-summary-card {
+  background: var(--gray1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+}
+.result-summary-card .val {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1;
+}
+.result-summary-card .lbl {
+  font-size: 0.75rem;
+  color: var(--gray4);
+  margin-top: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.elo-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.elo-stat {
+  background: var(--gray1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+.elo-stat .val { font-size: 1.8rem; font-weight: 800; color: var(--navy); }
+.elo-stat .lbl { font-size: 0.75rem; color: var(--gray4); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+.msg-box {
+  padding: 16px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #9a3412;
+  display: none;
+}
+</style>
+</head>
+<body>
+
+<div class="intel-hero">
+  <div>
+    <h1>Match Intelligence</h1>
+    <p>25 years of historical match data — 42 leagues, 475,000 matches</p>
+  </div>
+  <a href="/" class="back-btn">
+    &larr; Back to Analysis
+  </a>
+</div>
+
+<div class="intel-tabs">
+  <button class="intel-tab active" onclick="switchTab('predict', this)">Prediction</button>
+  <button class="intel-tab" onclick="switchTab('h2h', this)">Head to Head</button>
+  <button class="intel-tab" onclick="switchTab('elo', this)">Elo Ratings</button>
+  <button class="intel-tab" onclick="switchTab('league', this)">League Explorer</button>
+</div>
+
+<div class="intel-body">
+
+  <!-- Prediction -->
+  <div class="tab-pane active" id="tab-predict">
+    <div class="info-banner">
+      Powered by a Random Forest model trained on 475,000 historical matches
+      using Elo ratings and recent team form.
+    </div>
+    <div class="card">
+      <div class="card-title">Win Probability Predictor</div>
+      <div class="pred-form">
+        <div class="form-group">
+          <label>Home Team</label>
+          <input type="text" id="homeTeam" placeholder="e.g. Arsenal">
+        </div>
+        <div class="form-group">
+          <label>Away Team</label>
+          <input type="text" id="awayTeam" placeholder="e.g. Chelsea">
+        </div>
+        <div class="form-group">
+          <label>Home Elo Rating</label>
+          <input type="number" id="homeElo" value="1800">
+        </div>
+        <div class="form-group">
+          <label>Away Elo Rating</label>
+          <input type="number" id="awayElo" value="1750">
+        </div>
+        <div class="form-group">
+          <label>Home Form — last 5 matches (0–15)</label>
+          <input type="number" id="homeForm" value="9" min="0" max="15">
+        </div>
+        <div class="form-group">
+          <label>Away Form — last 5 matches (0–15)</label>
+          <input type="number" id="awayForm" value="7" min="0" max="15">
+        </div>
+        <button class="pred-btn" onclick="runPrediction()">Calculate Win Probability</button>
+      </div>
+
+      <div id="predResult" style="display:none; margin-top:28px">
+        <div style="font-size:0.82rem;color:var(--gray4);margin-bottom:16px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em">
+          Prediction — <span id="predTeams"></span>
+        </div>
+        <div class="result-bar-row">
+          <div class="result-label" id="homeLabel">Home</div>
+          <div class="result-bar-wrap">
+            <div class="result-bar-fill fill-home" id="homeBar" style="width:0%">0%</div>
+          </div>
+        </div>
+        <div class="result-bar-row" style="margin:10px 0">
+          <div class="result-label">Draw</div>
+          <div class="result-bar-wrap">
+            <div class="result-bar-fill fill-draw" id="drawBar" style="width:0%">0%</div>
+          </div>
+        </div>
+        <div class="result-bar-row">
+          <div class="result-label" id="awayLabel">Away</div>
+          <div class="result-bar-wrap">
+            <div class="result-bar-fill fill-away" id="awayBar" style="width:0%">0%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- H2H -->
+  <div class="tab-pane" id="tab-h2h">
+    <div class="card">
+      <div class="card-title">Head to Head Record</div>
+      <div class="pred-form" style="margin-bottom:20px">
+        <div class="form-group">
+          <label>Team A</label>
+          <input type="text" id="h2hTeamA" placeholder="e.g. Liverpool">
+        </div>
+        <div class="form-group">
+          <label>Team B</label>
+          <input type="text" id="h2hTeamB" placeholder="e.g. Man United">
+        </div>
+        <button class="pred-btn" onclick="loadH2H()">Load Head to Head</button>
+      </div>
+      <div class="msg-box" id="h2hMsg"></div>
+      <div id="h2hResult" style="display:none">
+        <div class="result-summary">
+          <div class="result-summary-card">
+            <div class="val" id="h2hWinsA">0</div>
+            <div class="lbl" id="h2hNameA">Team A Wins</div>
+          </div>
+          <div class="result-summary-card">
+            <div class="val" id="h2hDraws">0</div>
+            <div class="lbl">Draws</div>
+          </div>
+          <div class="result-summary-card">
+            <div class="val" id="h2hWinsB">0</div>
+            <div class="lbl" id="h2hNameB">Team B Wins</div>
+          </div>
+        </div>
+        <div style="font-size:0.78rem;color:var(--gray4);margin-bottom:12px">
+          Goals per match — last 20 encounters
+        </div>
+        <div class="chart-wrap-lg">
+          <canvas id="h2hChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Elo -->
+  <div class="tab-pane" id="tab-elo">
+    <div class="card">
+      <div class="card-title">Elo Rating History</div>
+      <div class="pred-form" style="margin-bottom:20px">
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Club Name</label>
+          <input type="text" id="eloClub" placeholder="e.g. Bayern Munich, Arsenal, Ajax">
+        </div>
+        <button class="pred-btn" onclick="loadElo()">Load Elo History</button>
+      </div>
+      <div class="msg-box" id="eloMsg"></div>
+      <div id="eloResult" style="display:none">
+        <div class="elo-stats">
+          <div class="elo-stat">
+            <div class="lbl">Current Elo</div>
+            <div class="val" id="eloCurrent">—</div>
+          </div>
+          <div class="elo-stat">
+            <div class="lbl">Peak Elo</div>
+            <div class="val" id="eloPeak">—</div>
+          </div>
+        </div>
+        <div class="chart-wrap-lg">
+          <canvas id="eloChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- League -->
+  <div class="tab-pane" id="tab-league">
+    <div class="card">
+      <div class="card-title">League Explorer</div>
+      <div class="info-banner">
+        Division codes: E0 (EPL), D1 (Bundesliga), SP1 (La Liga),
+        I1 (Serie A), F1 (Ligue 1). Season = year e.g. 2023
+      </div>
+      <div class="pred-form" style="margin-bottom:20px">
+        <div class="form-group">
+          <label>Division Code</label>
+          <input type="text" id="leagueDivision" placeholder="e.g. E0">
+        </div>
+        <div class="form-group">
+          <label>Season Year (optional)</label>
+          <input type="text" id="leagueSeason" placeholder="e.g. 2023">
+        </div>
+        <button class="pred-btn" onclick="loadLeague()">Load Matches</button>
+      </div>
+      <div class="msg-box" id="leagueMsg"></div>
+      <div id="leagueResult" style="overflow-x:auto; display:none">
+        <div style="font-size:0.78rem;color:var(--gray4);margin-bottom:12px"
+             id="leagueCount"></div>
+        <table class="player-table" id="leagueTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Home</th>
+              <th>Away</th>
+              <th>Score</th>
+              <th>Result</th>
+              <th>Home Elo</th>
+              <th>Away Elo</th>
+            </tr>
+          </thead>
+          <tbody id="leagueBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('.intel-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function showMsg(id, text) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.style.display = 'block';
+}
+function hideMsg(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+// ── Prediction ────────────────────────────────────────────────────────────────
+function runPrediction() {
+  const homeTeam = document.getElementById('homeTeam').value || 'Home';
+  const awayTeam = document.getElementById('awayTeam').value || 'Away';
+  const homeElo  = parseFloat(document.getElementById('homeElo').value) || 1800;
+  const awayElo  = parseFloat(document.getElementById('awayElo').value) || 1750;
+  const homeForm = parseFloat(document.getElementById('homeForm').value) || 9;
+  const awayForm = parseFloat(document.getElementById('awayForm').value) || 7;
+
+  fetch('/api/predict', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({homeElo, awayElo, homeForm, awayForm})
+  })
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById('predResult').style.display = 'block';
+    document.getElementById('predTeams').textContent =
+      homeTeam + ' vs ' + awayTeam;
+    document.getElementById('homeLabel').textContent = homeTeam;
+    document.getElementById('awayLabel').textContent = awayTeam;
+
+    setTimeout(() => {
+      setBar('homeBar', d.home);
+      setBar('drawBar', d.draw);
+      setBar('awayBar', d.away);
+    }, 50);
+  });
+}
+
+function setBar(id, val) {
+  const el = document.getElementById(id);
+  el.style.width = val + '%';
+  el.textContent = val + '%';
+}
+
+// ── H2H ───────────────────────────────────────────────────────────────────────
+let h2hChartInst = null;
+
+function loadH2H() {
+  const teamA = document.getElementById('h2hTeamA').value.trim();
+  const teamB = document.getElementById('h2hTeamB').value.trim();
+  if (!teamA || !teamB) { showMsg('h2hMsg', 'Enter both team names.'); return; }
+  hideMsg('h2hMsg');
+
+  fetch(`/api/h2h?teamA=${encodeURIComponent(teamA)}&teamB=${encodeURIComponent(teamB)}`)
+  .then(r => r.json())
+  .then(d => {
+    if (d.message || d.total === 0) {
+      showMsg('h2hMsg', d.message || 'No matches found between these teams.');
+      document.getElementById('h2hResult').style.display = 'none';
+      return;
+    }
+
+    document.getElementById('h2hResult').style.display = 'block';
+    document.getElementById('h2hNameA').textContent = teamA + ' Wins';
+    document.getElementById('h2hNameB').textContent = teamB + ' Wins';
+    document.getElementById('h2hWinsA').textContent = d.winsA;
+    document.getElementById('h2hDraws').textContent = d.draws;
+    document.getElementById('h2hWinsB').textContent = d.winsB;
+
+    if (h2hChartInst) h2hChartInst.destroy();
+    h2hChartInst = new Chart(document.getElementById('h2hChart'), {
+      type: 'bar',
+      data: {
+        labels: d.seasons,
+        datasets: [
+          {
+            label: teamA,
+            data: d.goalsA,
+            backgroundColor: '#1e2d3d',
+            borderRadius: 4,
+            borderSkipped: false
+          },
+          {
+            label: teamB,
+            data: d.goalsB,
+            backgroundColor: '#16a34a',
+            borderRadius: 4,
+            borderSkipped: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#6c757d', font: { size: 11 } } }
+        },
+        scales: {
+          x: { ticks: { color: '#adb5bd', font: { size: 10 } },
+               grid: { color: '#e9ecef' } },
+          y: { ticks: { color: '#adb5bd' }, grid: { color: '#e9ecef' } }
+        }
+      }
+    });
+  });
+}
+
+// ── Elo ───────────────────────────────────────────────────────────────────────
+let eloChartInst = null;
+
+function loadElo() {
+  const club = document.getElementById('eloClub').value.trim();
+  if (!club) { showMsg('eloMsg', 'Enter a club name.'); return; }
+  hideMsg('eloMsg');
+
+  fetch(`/api/elo?club=${encodeURIComponent(club)}`)
+  .then(r => r.json())
+  .then(d => {
+    if (d.message || !d.dates || d.dates.length === 0) {
+      showMsg('eloMsg', d.message || 'No data found for this club.');
+      document.getElementById('eloResult').style.display = 'none';
+      return;
+    }
+
+    document.getElementById('eloResult').style.display = 'block';
+    document.getElementById('eloCurrent').textContent = d.current_elo;
+    document.getElementById('eloPeak').textContent = d.peak_elo;
+
+    if (eloChartInst) eloChartInst.destroy();
+    eloChartInst = new Chart(document.getElementById('eloChart'), {
+      type: 'line',
+      data: {
+        labels: d.dates,
+        datasets: [{
+          label: (d.club || club) + ' — Elo Rating',
+          data: d.elos,
+          borderColor: '#1e2d3d',
+          backgroundColor: 'rgba(30,45,61,0.06)',
+          borderWidth: 2,
+          pointRadius: 0,
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#6c757d', font: { size: 11 } } }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#adb5bd', maxTicksLimit: 10, font: { size: 10 } },
+            grid: { color: '#e9ecef' }
+          },
+          y: { ticks: { color: '#adb5bd' }, grid: { color: '#e9ecef' } }
+        }
+      }
+    });
+  });
+}
+
+// ── League ────────────────────────────────────────────────────────────────────
+function loadLeague() {
+  const division = document.getElementById('leagueDivision').value.trim();
+  const season   = document.getElementById('leagueSeason').value.trim();
+  if (!division) { showMsg('leagueMsg', 'Enter a division code.'); return; }
+  hideMsg('leagueMsg');
+
+  fetch(`/api/league?division=${encodeURIComponent(division)}&season=${encodeURIComponent(season)}`)
+  .then(r => r.json())
+  .then(d => {
+    if (!d.matches || d.matches.length === 0) {
+      showMsg('leagueMsg', d.message || 'No matches found.');
+      document.getElementById('leagueResult').style.display = 'none';
+      return;
+    }
+
+    document.getElementById('leagueResult').style.display = 'block';
+    document.getElementById('leagueCount').textContent =
+      `Showing ${d.matches.length} of ${d.total_found || d.matches.length} matches`;
+
+    const tbody = document.getElementById('leagueBody');
+    tbody.innerHTML = d.matches.map(m => `
+      <tr>
+        <td style="color:var(--gray4);font-size:0.82rem">${m.date}</td>
+        <td><strong>${m.home}</strong></td>
+        <td>${m.away}</td>
+        <td><strong>${m.score}</strong></td>
+        <td>
+          <span class="team-pill ${
+            m.result === 'H' ? 't1-pill' :
+            m.result === 'A' ? 't2-pill' : ''
+          }">
+            ${m.result === 'H' ? 'Home Win' :
+              m.result === 'A' ? 'Away Win' : 'Draw'}
+          </span>
+        </td>
+        <td style="color:var(--gray4)">${m.homeElo || '—'}</td>
+        <td style="color:var(--gray4)">${m.awayElo || '—'}</td>
+      </tr>
+    `).join('');
+  });
+}
+</script>
+</body>
+</html>
